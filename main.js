@@ -1,9 +1,23 @@
 const GameBoard = (() => {
     const gameBoard = [
-        ['','',''],
-        ['','',''],
-        ['','','']
+        // ['','',''],
+        // ['','',''],
+        // ['','','']
     ]
+    const setupGameBoard = (size) => {
+        const root = document.querySelector(':root')
+        root.style.setProperty('--cols', `repeat(${size}, 1fr)`)
+        root.style.setProperty('--rows', `repeat(${size}, 1fr)`)
+        root.style.setProperty('--width', 300+(size-1)*6 + 'px')
+        root.style.setProperty('--height', 300+(size-1)*6 + 'px')
+        root.style.setProperty('--mark-size', Math.round(0.8*(300/size)) + 'px')
+        for(i=0; i<size; i++) {
+            gameBoard.push([])
+            for(j=0; j<size; j++) {
+                gameBoard[i].push('')
+            }
+        }
+    }
     const drawBoard = () => {
         const bodyHeader = document.getElementsByTagName('header')[0]
         const currentBoard = document.getElementsByClassName('game-container')[0]
@@ -24,13 +38,29 @@ const GameBoard = (() => {
             currentBoard.innerHTML = gameBoardEl.innerHTML
         }
     }
+    const calcRow = (index) => {
+        const rowQty = gameBoard.length
+        for(i=1; rowQty*i<rowQty**2+1; i++) {
+            if(index<rowQty*i+1) {
+                return i-1
+            }
+        }
+    }
+    const calcCol = (index, row) => {
+        const colQty = gameBoard.length
+        for(i=0; i<colQty; i++) {
+            if(index===colQty*row-colQty+i+1) {
+                return i
+            }
+        }
+    }
     const updateBoard = (index, mark) => {
-        const row = (index<4) ? 0 : (index<7) ? 1 : 2
-        const col = (index in {1:null, 4:null, 7:null}) ? 0 : (index in {2:null, 5:null, 8:null}) ? 1 : 2
+        const row = calcRow(index)
+        const col = calcCol(index, row+1)
         gameBoard[row][col] = mark
         drawBoard()
     }
-    return { updateBoard }
+    return { gameBoard, setupGameBoard, updateBoard }
 })()
 const Player = (name, type, mark) => {
     return {name, type, mark}
@@ -39,6 +69,7 @@ const GameManager = () => {
 
 }
 
+GameBoard.setupGameBoard(3)
 GameBoard.updateBoard(5,'o')
 GameBoard.updateBoard(1,'x')
 GameBoard.updateBoard(9,'o')

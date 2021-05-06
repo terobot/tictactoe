@@ -1,3 +1,11 @@
+:root {
+    --cols: repeat(3, 1fr);
+    --rows: repeat(3, 1fr);
+    --width: 312px;
+    --height: 312px;
+    --mark-size: 80px;
+}
+
 body {
     font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
     margin: 0;
@@ -15,16 +23,16 @@ header {
 .game-container {
     display: grid;
     margin: auto;
-    width: 312px;
-    height: 312px;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
+    width: var(--width);
+    height: var(--height);
+    grid-template-columns: var(--cols);
+    grid-template-rows: var(--rows);
     gap: 6px 6px;
 }
 
 .game-cell {
     background-color:seashell;
-    font-size: 5em;
+    font-size: var(--mark-size);
     text-align: center;
     vertical-align: middle;
 }
