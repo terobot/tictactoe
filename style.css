@@ -14,10 +14,11 @@ body {
 
 header {
     color: seashell;
-    padding: 0.5em;
+    padding: 10px;
     font-weight: bold;
     font-size: 3em;
-    text-align: left;
+    text-align: center;
+    user-select: none;
 }
 
 .game-container {
@@ -28,6 +29,7 @@ header {
     grid-template-columns: var(--cols);
     grid-template-rows: var(--rows);
     gap: 6px 6px;
+    padding: 10px;
 }
 
 .game-cell {
@@ -35,4 +37,52 @@ header {
     font-size: var(--mark-size);
     text-align: center;
     vertical-align: middle;
+    user-select: none;
+}
+
+.game-cell:empty:hover {
+    background-color:mistyrose;
+}
+
+.questions {
+    display: flex;
+    font-size: 16px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 230px;
+    margin:auto;
+    gap: 5px;
+}
+
+.questions-button {
+    display:inline-block;
+    color:black;
+    background:seashell;
+    box-shadow: 0 0 5px -1px rgba(0,0,0,0.2);
+    user-select: none;
+    vertical-align:middle;
+    width: 100px;
+    padding: 5px;
+    text-align: center;
+    pointer-events: none;
+}
+
+.questions-button-disabled {
+    display:inline-block;
+    color:rgba(128, 128, 128, 0.5);
+    background:rgba(255, 245, 238, 0.1);
+    box-shadow: 0 0 5px -1px rgba(0,0,0,0.2);
+    cursor:pointer;
+    user-select: none;
+    vertical-align:middle;
+    width: 100px;
+    padding: 5px;
+    text-align: center;
+}
+
+.questions-button-disabled:hover {
+    color:red;
+    background:seashell;
+    box-shadow: 0 0 5px -1px rgba(0,0,0,0.6);
 }
