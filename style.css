@@ -16,9 +16,34 @@ header {
     color: seashell;
     padding: 10px;
     font-weight: bold;
-    font-size: 3em;
+    font-size: 2em;
     text-align: center;
     user-select: none;
+}
+
+.stats {
+    display: flex;
+    font-size: 16px;
+    font-weight: bold;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 330px;
+    margin:auto;
+    gap: 5px;
+    padding: 5px;
+}
+
+.stats-player {
+    display:inline-block;
+    color:seashell;
+    user-select: none;
+    vertical-align:middle;
+    width: 150px;
+    padding: 5px;
+    text-align: center;
+    pointer-events: none;
+    line-height: 20px;
 }
 
 .game-container {
@@ -47,10 +72,11 @@ header {
 .questions {
     display: flex;
     font-size: 16px;
+    font-weight: bold;
     align-items: center;
     justify-content: center;
     flex-wrap: wrap;
-    width: 230px;
+    width: 250px;
     margin:auto;
     gap: 5px;
 }
@@ -62,7 +88,7 @@ header {
     box-shadow: 0 0 5px -1px rgba(0,0,0,0.2);
     user-select: none;
     vertical-align:middle;
-    width: 100px;
+    width: 110px;
     padding: 5px;
     text-align: center;
     pointer-events: none;
