@@ -129,6 +129,7 @@ const GameManager = (() => {
         const questionsEl = document.getElementsByClassName('questions')[0]
         const statsEl = document.getElementsByClassName('stats')[0]
         const gameBoardEl = document.getElementsByClassName('game-container')[0]
+        const modalEl = document.getElementsByClassName('modal-overlay')[0]
         if(questionsEl) {
             while (questionsEl.lastElementChild) {
                 questionsEl.lastElementChild.remove()
@@ -146,6 +147,12 @@ const GameManager = (() => {
                 gameBoardEl.lastElementChild.remove()
             }
             gameBoardEl.remove()
+        }
+        if(modalEl) {
+            while (modalEl.lastElementChild) {
+                modalEl.lastElementChild.remove()
+            }
+            modalEl.remove()
         }
     }
     const newGame = () => {
@@ -270,7 +277,7 @@ const GameManager = (() => {
     const changeTurn = (turn) => {
         gameParameters.turn = turn === 'x' ? 'o' : 'x'
     }
-    const drawWinnerModal = (player) => {
+    const drawModal = (player, type) => {
         const bodyHeader = document.getElementsByTagName('header')[0]
         const modalOverlay = document.createElement('div')
         const modal = document.createElement('div')
@@ -278,7 +285,12 @@ const GameManager = (() => {
         modalOverlay.setAttribute('class', 'modal-overlay')
         modal.setAttribute('class', 'modal')
         modalGuts.setAttribute('class', 'modal-guts')
-        modalGuts.innerHTML = player.name !== 'You' ? `${player.name} wins!` : `${player.name} won!`
+        if(type === 'win') {
+            modalGuts.innerHTML = player.name !== 'You' ? `${player.name} wins!` : `${player.name} won!`
+        }
+        if(type === 'draw') {
+            modalGuts.innerHTML = 'Draw!'
+        }
         modal.append(modalGuts)
         modalOverlay.append(modal)
         bodyHeader.insertAdjacentElement('afterend',modalOverlay)
@@ -306,17 +318,25 @@ const GameManager = (() => {
         }
         if(checkWinningRow(index, gameParameters.turn, gameParameters.gameBoardSize)) {
             if(gameParameters.turn === gameParameters.player1.mark) {
-                drawWinnerModal(gameParameters.player1)
+                drawModal(gameParameters.player1, 'win')
                 gameParameters.player1.score += 1
                 switchMarks()
                 gameParameters.turn = 'x'
+                setTimeout(f => newGame(), 1000)
             }
             else {
-                drawWinnerModal(gameParameters.player2)
-                gameParameters.player1.score += 1
+                drawModal(gameParameters.player2, 'win')
+                gameParameters.player2.score += 1
                 switchMarks()
                 gameParameters.turn = 'x'
+                setTimeout(f => newGame(), 1000)
             }
+        }
+        else if(!checkForEmptyCell(GameBoard.gameBoard)) {
+            drawModal(null, 'draw')
+            switchMarks()
+            gameParameters.turn = 'x'
+            setTimeout(f => newGame(), 1000)
         }
         else {
             controlGamePlay(gameParameters.gameType)
