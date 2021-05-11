@@ -153,6 +153,10 @@ const GameManager = (() => {
         drawQuestions(gameParameters.gameType)
         GameBoard.setupGameBoard(gameParameters.gameBoardSize)
         drawStats()
+        if(gameParameters.gameType === 1 & gameParameters.player2.mark === gameParameters.turn) {
+            playBotMove(gameParameters.difficulty, gameParameters.player2.mark, GameBoard.gameBoard, gameParameters.gameBoardSize)
+            changeTurn(gameParameters.turn)
+        }
         console.log(gameParameters)
     }
     const initSinglePlayerGame = () => {
@@ -185,29 +189,114 @@ const GameManager = (() => {
             }
         }
     }
-    const controlGamePlay = (gameType) => {
-        if (gameType === 1) {
-            playBotMove(gameParameters.difficulty, gameParameters.player2.mark, GameBoard.gameBoard, gameParameters.gameBoardSize)
-        }
-        else {
-            changeTurn(gameParameters.turn)
-        }
-    }
     const checkForEmptyCell = (board) => {
-        board.forEach(e => {
-            if (e === '') {
-                return true
-            }
+        var emptyCellExist = false
+        board.forEach(row => {
+            row.forEach(col => {
+                if (col === '') {
+                    emptyCellExist = true
+                }
+            })
         })
-        return false
+        return emptyCellExist
     }
     const checkWinningRow = (index, mark, size) => {
         const row = GameBoard.calcRow(index)
-        const col = GameBoard.calcCol(index, row)
+        const col = GameBoard.calcCol(index, row+1)
+        const board = GameBoard.gameBoard
+        console.log('Row: ' + row)
+        console.log('Col: ' + col + ' Size:' + size)
+        console.log(board)
+        if (row-1 >= 0 & row+1 < size) {
+            if (board[row-1][col] === mark & board[row+1][col] === mark) {
+                return true
+            }
+        }
+        if (row-1 >= 0 & row+1 < size & col-1 >= 0 & col+1 < size) {
+            if (board[row-1][col+1] === mark & board[row+1][col-1] === mark) {
+                return true
+            }
+            if (board[row+1][col+1] === mark & board[row-1][col-1] === mark) {
+                return true
+            }
+        }
+        if (col-1 >= 0 & col+1 < size) {
+            if (board[row][col+1] === mark & board[row][col-1] === mark) {
+                return true
+            }
+        }
+        if (row-2 >= 0) {
+            if (board[row-1][col] === mark & board[row-2][col] === mark) {
+                return true
+            }
+        }
+        if (col-2 >= 0) {
+            if (board[row][col-1] === mark & board[row][col-2] === mark) {
+                return true
+            }
+        }
+        if (row+2 < size) {
+            if (board[row+1][col] === mark & board[row+2][col] === mark) {
+                return true
+            }
+        }
+        if (col+2 < size) {
+            if (board[row][col+1] === mark & board[row][col+2] === mark) {
+                return true
+            }
+        }
+        if (row-2 >= 0 & col+2 < size) {
+            if (board[row-1][col+1] === mark & board[row-2][col+2] === mark) {
+                return true
+            }
+        }
+        if (row-2 >= 0 & col-2 >= 0) {
+            if (board[row-1][col-1] === mark & board[row-2][col-2] === mark) {
+                return true
+            }
+        }
+        if (row+2 < size & col+2 < size) {
+            if (board[row+1][col+1] === mark & board[row+2][col+2] === mark) {
+                return true
+            }
+        }
+        if (row+2 < size & col-2 < size) {
+            if (board[row+1][col-1] === mark & board[row+2][col-2] === mark) {
+                return true
+            }
+        }
         return false
     }
     const changeTurn = (turn) => {
         gameParameters.turn = turn === 'x' ? 'o' : 'x'
+    }
+    const drawWinnerModal = (player) => {
+        const bodyHeader = document.getElementsByTagName('header')[0]
+        const modalOverlay = document.createElement('div')
+        const modal = document.createElement('div')
+        const modalGuts = document.createElement('div')
+        modalOverlay.setAttribute('class', 'modal-overlay')
+        modal.setAttribute('class', 'modal')
+        modalGuts.setAttribute('class', 'modal-guts')
+        modalGuts.innerHTML = player.name !== 'You' ? `${player.name} wins!` : `${player.name} won!`
+        modal.append(modalGuts)
+        modalOverlay.append(modal)
+        bodyHeader.insertAdjacentElement('afterend',modalOverlay)
+    }
+    const switchMarks = () => {
+        const mark1 = gameParameters.player1.mark
+        const mark2 = gameParameters.player2.mark
+        gameParameters.player1.mark = mark2
+        gameParameters.player2.mark = mark1
+    }
+    const controlGamePlay = (gameType) => {
+        const isNotFull = checkForEmptyCell(GameBoard.gameBoard)
+        if (isNotFull & gameType === 1) {
+            playBotMove(gameParameters.difficulty, gameParameters.player2.mark, GameBoard.gameBoard, gameParameters.gameBoardSize)
+        }
+        else if (isNotFull & gameType === 2) {
+            changeTurn(gameParameters.turn)
+        }
     }
     const placeMark = (e) => {
         const element = e.target
@@ -215,8 +304,23 @@ const GameManager = (() => {
         if(element.innerHTML==='') {
             GameBoard.updateBoard(element, index, gameParameters.turn)
         }
-        checkWinningRow(index, gameParameters.turn, gameParameters.size)
-        controlGamePlay(gameParameters.gameType)
+        if(checkWinningRow(index, gameParameters.turn, gameParameters.gameBoardSize)) {
+            if(gameParameters.turn === gameParameters.player1.mark) {
+                drawWinnerModal(gameParameters.player1)
+                gameParameters.player1.score += 1
+                switchMarks()
+                gameParameters.turn = 'x'
+            }
+            else {
+                drawWinnerModal(gameParameters.player2)
+                gameParameters.player1.score += 1
+                switchMarks()
+                gameParameters.turn = 'x'
+            }
+        }
+        else {
+            controlGamePlay(gameParameters.gameType)
+        }
         e.preventDefault()
     }
     return { newGame, placeMark }
