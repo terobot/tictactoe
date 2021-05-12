@@ -91,8 +91,8 @@ const GameManager = (() => {
         twoPlayerEl.addEventListener('click', initTwoPlayerGame)
         sizeThree.innerHTML = '3x3'
         sizeThree.addEventListener('click', initThreeSizeGame)
-        sizeFive.innerHTML = '5x5'
-        sizeFive.addEventListener('click', initFiveSizeGame)
+        sizeFive.innerHTML = '4x4'
+        sizeFive.addEventListener('click', initFourSizeGame)
         if(gameType===2) {
             singlePlayerEl.setAttribute('class', 'questions-button-disabled')
             twoPlayerEl.setAttribute('class', 'questions-button')
@@ -186,12 +186,14 @@ const GameManager = (() => {
         gameParameters.gameType = 1
         gameParameters.player1 = Player('You', 'human', 'x', 0, true)
         gameParameters.player2 = Player('Bot', 'ai', 'o', 0, false)
+        gameParameters.turn = 'x'
         newGame()
     }
     const initTwoPlayerGame = () => {
         gameParameters.gameType = 2
         gameParameters.player1 = Player('Player1', 'human', 'x', 0, true)
         gameParameters.player2 = Player('Player2', 'human', 'o', 0, false)
+        gameParameters.turn = 'x'
         newGame()
     }
     const initThreeSizeGame = () => {
@@ -199,9 +201,9 @@ const GameManager = (() => {
         gameParameters.gameBoardSize = 3
         newGame()
     }
-    const initFiveSizeGame = () => {
+    const initFourSizeGame = () => {
         gameParameters.turn = 'x'
-        gameParameters.gameBoardSize = 5
+        gameParameters.gameBoardSize = 4
         newGame()
     }
     const playBotMove = (difficulty, botMark, board, size) => {
@@ -233,13 +235,13 @@ const GameManager = (() => {
             currentTestData.index = emptyIndexes[i]
             currentBoard[calcRow(emptyIndexes[i])][calcCol(emptyIndexes[i], calcRow(emptyIndexes[i])+1)] = currentMark
             if (currentMark === gameParameters.player2.mark) {
-                const result = minimax(currentBoard, currentIndex, gameParameters.player1.mark)
+                const result = minimax(currentBoard, currentTestData.index, gameParameters.player1.mark)
                 currentTestData.score = result.score
             } else {
-                const result = minimax(currentBoard, currentIndex, gameParameters.player2.mark)
+                const result = minimax(currentBoard, currentTestData.index, gameParameters.player2.mark)
                 currentTestData.score = result.score
             }
-            currentBoard[availCellsIndexes[i]] = currentTestData.index
+            currentBoard[emptyIndexes[i]] = currentTestData.index
             allTestsData.push(currentTestData)
         }
         var bestTestPlay = null
