@@ -78,15 +78,21 @@ const GameManager = (() => {
         player2: Player('Bot', 'ai', 'o', 0, false),
         turn: 'x'
     }
-    const drawQuestions = (gameType) => {
+    const drawQuestions = (gameType, size) => {
         const bodyHeader = document.getElementsByTagName('header')[0]
         const questionsEl = document.createElement('div')
         const singlePlayerEl = document.createElement('div')
         const twoPlayerEl = document.createElement('div')
+        const sizeThree = document.createElement('div')
+        const sizeFive = document.createElement('div') 
         singlePlayerEl.innerHTML = 'Single Player Game'
         singlePlayerEl.addEventListener('click', initSinglePlayerGame)
         twoPlayerEl.innerHTML = 'Two Player Game'
         twoPlayerEl.addEventListener('click', initTwoPlayerGame)
+        sizeThree.innerHTML = '3x3'
+        sizeThree.addEventListener('click', initThreeSizeGame)
+        sizeFive.innerHTML = '5x5'
+        sizeFive.addEventListener('click', initFiveSizeGame)
         if(gameType===2) {
             singlePlayerEl.setAttribute('class', 'questions-button-disabled')
             twoPlayerEl.setAttribute('class', 'questions-button')
@@ -95,9 +101,19 @@ const GameManager = (() => {
             singlePlayerEl.setAttribute('class', 'questions-button')
             twoPlayerEl.setAttribute('class', 'questions-button-disabled')
         }
+        if(size === 3) {
+            sizeThree.setAttribute('class', 'questions-button')
+            sizeFive.setAttribute('class', 'questions-button-disabled')
+        }
+        else {
+            sizeThree.setAttribute('class', 'questions-button-disabled')
+            sizeFive.setAttribute('class', 'questions-button')
+        }
         questionsEl.setAttribute('class', 'questions')
         questionsEl.append(singlePlayerEl)
         questionsEl.append(twoPlayerEl)
+        questionsEl.append(sizeThree)
+        questionsEl.append(sizeFive)
         bodyHeader.insertAdjacentElement('afterend',questionsEl)
     }
     const createStatsEl = () => {
@@ -157,7 +173,7 @@ const GameManager = (() => {
     }
     const newGame = () => {
         initDisplay()
-        drawQuestions(gameParameters.gameType)
+        drawQuestions(gameParameters.gameType, gameParameters.gameBoardSize)
         GameBoard.setupGameBoard(gameParameters.gameBoardSize)
         drawStats()
         if(gameParameters.gameType === 1 & gameParameters.player2.mark === gameParameters.turn) {
@@ -178,42 +194,91 @@ const GameManager = (() => {
         gameParameters.player2 = Player('Player2', 'human', 'o', 0, false)
         newGame()
     }
-    const getRandomIntInclusive = (min, max) => {
-        min = Math.ceil(min)
-        max = Math.floor(max)
-        return Math.floor(Math.random() * (max - min + 1) + min)
+    const initThreeSizeGame = () => {
+        gameParameters.turn = 'x'
+        gameParameters.gameBoardSize = 3
+        newGame()
+    }
+    const initFiveSizeGame = () => {
+        gameParameters.turn = 'x'
+        gameParameters.gameBoardSize = 5
+        newGame()
     }
     const playBotMove = (difficulty, botMark, board, size) => {
         if (difficulty === 'Easy') {
-            var movePlayed = false
-            while (!movePlayed) {
-                var index = getRandomIntInclusive(1, size*size)
-                var element = document.getElementById(`${index}`)
-                if (element.innerHTML === '') {
-                    GameBoard.updateBoard(element, index, botMark)
-                    movePlayed = true
+            const emptyIndexes = getEmptyIndexes(board)
+            const index = emptyIndexes[Math.floor(Math.random() * emptyIndexes.length)]
+            const element = document.getElementById(`${index}`)
+            GameBoard.updateBoard(element, index, botMark)
+            checkResult(index, botMark, size)
+        }
+        else {
+            
+        }
+    }
+    const minimax = (currentBoard, currentIndex, currentMark) => {
+        const emptyIndexes = getEmptyIndexes(currentBoard)
+        if (checkWinningRow(currentIndex, gameParameters.player1.mark, gameParameters.gameBoardSize)) {
+            return {score: -1}
+        } 
+        else if (checkWinningRow(currentIndex, gameParameters.player2.mark, gameParameters.gameBoardSize)) {
+            return {score: 1}
+        }
+        else if (emptyIndexes.length === 0) {
+            return {score: 0}
+        }
+        const allTestsData = []
+        for (i = 0; i < emptyIndexes.length; i++) {
+            const currentTestData = {}
+            currentTestData.index = emptyIndexes[i]
+            currentBoard[calcRow(emptyIndexes[i])][calcCol(emptyIndexes[i], calcRow(emptyIndexes[i])+1)] = currentMark
+            if (currentMark === gameParameters.player2.mark) {
+                const result = minimax(currentBoard, currentIndex, gameParameters.player1.mark)
+                currentTestData.score = result.score
+            } else {
+                const result = minimax(currentBoard, currentIndex, gameParameters.player2.mark)
+                currentTestData.score = result.score
+            }
+            currentBoard[availCellsIndexes[i]] = currentTestData.index
+            allTestsData.push(currentTestData)
+        }
+        var bestTestPlay = null
+        if (currentMark === gameParameters.player2.mark) {
+            var bestScore = -Infinity
+            for (i = 0; i < allTestsData.length; i++) {
+                if (allTestsData[i].score > bestScore) {
+                    bestScore = allTestsData[i].score
+                    bestTestPlay = i
+                }
+            }
+        } else {
+            var bestScore = Infinity
+            for (i = 0; i < allTestsData.length; i++) {
+                if (allTestsData[i].score < bestScore) {
+                    bestScore = allTestsData[i].score
+                    bestTestPlay = i
                 }
             }
         }
+        return allTestsData[bestTestPlay]
     }
-    const checkForEmptyCell = (board) => {
-        var emptyCellExist = false
-        board.forEach(row => {
-            row.forEach(col => {
-                if (col === '') {
-                    emptyCellExist = true
+    const getEmptyIndexes = (board) => {
+        const emptyIndexes = []
+        var index = 0
+        for(i=0; i<board.length; i++) {
+            for(j=0; j<board[i].length; j++) {
+                index++
+                if(board[i][j] === '') {
+                    emptyIndexes.push(index)
                 }
-            })
-        })
-        return emptyCellExist
+            }
+        }
+        return emptyIndexes
     }
     const checkWinningRow = (index, mark, size) => {
         const row = GameBoard.calcRow(index)
         const col = GameBoard.calcCol(index, row+1)
         const board = GameBoard.gameBoard
-        console.log('Row: ' + row)
-        console.log('Col: ' + col + ' Size:' + size)
-        console.log(board)
         if (row-1 >= 0 & row+1 < size) {
             if (board[row-1][col] === mark & board[row+1][col] === mark) {
                 return true
@@ -301,12 +366,31 @@ const GameManager = (() => {
         gameParameters.player1.mark = mark2
         gameParameters.player2.mark = mark1
     }
+    const checkResult = (index, mark, size) => {
+        if(checkWinningRow(index, mark, size)) {
+            if(mark === gameParameters.player1.mark) {
+                drawModal(gameParameters.player1, 'win')
+                gameParameters.player1.score += 1
+                return true
+            }
+            else {
+                drawModal(gameParameters.player2, 'win')
+                gameParameters.player2.score += 1
+                return true
+            }
+        }
+        else if(getEmptyIndexes(GameBoard.gameBoard).length === 0) {
+            drawModal(null, 'draw')
+            return true
+        }
+        return false
+    }
     const controlGamePlay = (gameType) => {
-        const isNotFull = checkForEmptyCell(GameBoard.gameBoard)
-        if (isNotFull & gameType === 1) {
+        const emptyIndexes = getEmptyIndexes(GameBoard.gameBoard)
+        if (emptyIndexes.length !== 0 & gameType === 1) {
             playBotMove(gameParameters.difficulty, gameParameters.player2.mark, GameBoard.gameBoard, gameParameters.gameBoardSize)
         }
-        else if (isNotFull & gameType === 2) {
+        else if (emptyIndexes.length !== 0 & gameType === 2) {
             changeTurn(gameParameters.turn)
         }
     }
@@ -316,30 +400,13 @@ const GameManager = (() => {
         if(element.innerHTML==='') {
             GameBoard.updateBoard(element, index, gameParameters.turn)
         }
-        if(checkWinningRow(index, gameParameters.turn, gameParameters.gameBoardSize)) {
-            if(gameParameters.turn === gameParameters.player1.mark) {
-                drawModal(gameParameters.player1, 'win')
-                gameParameters.player1.score += 1
-                switchMarks()
-                gameParameters.turn = 'x'
-                setTimeout(f => newGame(), 1000)
-            }
-            else {
-                drawModal(gameParameters.player2, 'win')
-                gameParameters.player2.score += 1
-                switchMarks()
-                gameParameters.turn = 'x'
-                setTimeout(f => newGame(), 1000)
-            }
+        if(!checkResult(index, gameParameters.turn, gameParameters.gameBoardSize)) {
+            controlGamePlay(gameParameters.gameType)
         }
-        else if(!checkForEmptyCell(GameBoard.gameBoard)) {
-            drawModal(null, 'draw')
+        else {
             switchMarks()
             gameParameters.turn = 'x'
             setTimeout(f => newGame(), 1000)
-        }
-        else {
-            controlGamePlay(gameParameters.gameType)
         }
         e.preventDefault()
     }

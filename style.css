@@ -102,7 +102,7 @@ header {
     cursor:pointer;
     user-select: none;
     vertical-align:middle;
-    width: 100px;
+    width: 110px;
     padding: 5px;
     text-align: center;
 }
@@ -116,7 +116,7 @@ header {
 .modal {
     width: 200px;
     max-width: 100%; 
-    height: 80px;
+    height: 160px;
     max-height: 100%;
     position: fixed;
     z-index: 100;
