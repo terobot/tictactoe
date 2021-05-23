@@ -76,7 +76,8 @@ const GameManager = (() => {
         difficulty: 'easy',
         player1: Player('You', 'human', 'x', 0, true),
         player2: Player('Bot', 'ai', 'o', 0, false),
-        turn: 'x'
+        turn: 'x',
+        botMakingMove: false
     }
     const drawQuestions = (gameType, size, difficulty) => {
         const bodyHeader = document.getElementsByTagName('header')[0]
@@ -130,7 +131,9 @@ const GameManager = (() => {
         questionsEl.append(sizeFive)
         if (gameType !== 2) {
             questionsEl.append(easy)
-            questionsEl.append(impossible)
+            if (size === 3) {
+                questionsEl.append(impossible)
+            }
         }
         bodyHeader.insertAdjacentElement('afterend',questionsEl)
     }
@@ -205,6 +208,7 @@ const GameManager = (() => {
         gameParameters.player1 = Player('You', 'human', 'x', 0, true)
         gameParameters.player2 = Player('Bot', 'ai', 'o', 0, false)
         gameParameters.turn = 'x'
+        gameParameters.botMakingMove = false
         newGame()
     }
     const initTwoPlayerGame = () => {
@@ -212,99 +216,96 @@ const GameManager = (() => {
         gameParameters.player1 = Player('Player1', 'human', 'x', 0, true)
         gameParameters.player2 = Player('Player2', 'human', 'o', 0, false)
         gameParameters.turn = 'x'
+        gameParameters.botMakingMove = false
         newGame()
     }
     const initThreeSizeGame = () => {
         gameParameters.turn = 'x'
+        gameParameters.botMakingMove = false
         gameParameters.gameBoardSize = 3
         newGame()
     }
     const initFiveSizeGame = () => {
         gameParameters.turn = 'x'
+        gameParameters.botMakingMove = false
         gameParameters.gameBoardSize = 5
         newGame()
     }
     const initEasyGame = () => {
         gameParameters.turn = 'x'
+        gameParameters.botMakingMove = false
         gameParameters.difficulty = 'easy'
         newGame()
     }
     const initImpossibleGame = () => {
         gameParameters.turn = 'x'
+        gameParameters.botMakingMove = false
         gameParameters.difficulty = 'impossible' 
         newGame()
     }
     const playBotMove = (difficulty, botMark, board, size) => {
         const emptyIndexes = getEmptyIndexes(board)
-        const randomEmptyIndex = emptyIndexes[Math.floor(Math.random() * emptyIndexes.length)]
-        if (difficulty === 'easy') {
-            const index = randomEmptyIndex
-            const element = document.getElementById(`${index}`)
-            GameBoard.updateBoard(element, index, botMark)
-            checkResult(index, botMark, size)
+        var index = emptyIndexes[Math.floor(Math.random() * emptyIndexes.length)]
+        if (difficulty === 'impossible') {
+            index = minimax(board, 0, true)
         }
-        else {
-            const result = minimax(board, randomEmptyIndex, botMark)
-            console.log(result)
-            const index = result.index
-            console.log('Bot play index:')
-            console.log(index)
-            const element = document.getElementById(`${index}`)
-            GameBoard.updateBoard(element, index, botMark)
-            checkResult(index, botMark, size)
+        const element = document.getElementById(`${index}`)
+        GameBoard.updateBoard(element, index, botMark)
+        gameParameters.botMakingMove = false
+        if(checkResult(board, botMark, size)) {
+            switchMarks()
+            gameParameters.turn = 'x'
+            setTimeout(f => newGame(), 1000)
         }
     }
-    const minimax = (currentBoard, currentIndex, currentMark) => {
-        console.log(currentBoard)
-        const emptyIndexes = getEmptyIndexes(currentBoard)
-        if (checkWinningRow(currentIndex, gameParameters.player1.mark, gameParameters.gameBoardSize)) {
-            console.log('Player')
-            return {score: -1}
-        } 
-        else if (checkWinningRow(currentIndex, gameParameters.player2.mark, gameParameters.gameBoardSize)) {
-            console.log('Bot')
-            return {score: 1}
+    const minimax = (board, depth, isMaximizing) => {
+        const emptyIndexes = getEmptyIndexes(board)
+        const humanMark = gameParameters.player1.mark
+        const botMark = gameParameters.player2.mark
+        const size = gameParameters.gameBoardSize
+        if (checkWinningRow(board, botMark, size)) {
+            return 10-depth
         }
-        else if (emptyIndexes.length === 0) {
-            console.log('Draw')
-            return {score: 0}
+        else if (checkWinningRow(board, humanMark, size)) {
+            return depth-10
         }
-        // const allTestsData = []
-        // for (i = 0; i < emptyIndexes.length; i++) {
-        //     const currentTestData = {}
-        //     var row = GameBoard.calcRow(emptyIndexes[i])
-        //     var col = GameBoard.calcCol(emptyIndexes[i], row+1)
-        //     currentTestData.index = emptyIndexes[i]
-        //     currentBoard[row][col] = currentMark
-        //     if (currentMark === gameParameters.player2.mark) {
-        //         const result = minimax(currentBoard, currentTestData.index, gameParameters.player1.mark)
-        //         currentTestData.score = result.score
-        //     } else {
-        //         const result = minimax(currentBoard, currentTestData.index, gameParameters.player2.mark)
-        //         currentTestData.score = result.score
-        //     }
-        //     emptyIndexes[i] = currentTestData.index
-        //     allTestsData.push(currentTestData)
-        // }
-        // var bestTestPlay = null
-        // if (currentMark === gameParameters.player2.mark) {
-        //     var bestScore = -Infinity
-        //     for (i = 0; i < allTestsData.length; i++) {
-        //         if (allTestsData[i].score > bestScore) {
-        //             bestScore = allTestsData[i].score
-        //             bestTestPlay = i
-        //         }
-        //     }
-        // } else {
-        //     var bestScore = Infinity
-        //     for (i = 0; i < allTestsData.length; i++) {
-        //         if (allTestsData[i].score < bestScore) {
-        //             bestScore = allTestsData[i].score
-        //             bestTestPlay = i
-        //         }
-        //     }
-        // }
-        // return allTestsData[bestTestPlay]
+        else if (emptyIndexes.length === 0) return 0
+
+        var moves = []
+
+        emptyIndexes.forEach(index => {
+            var move = {}
+            var row = GameBoard.calcRow(index)
+            var col = GameBoard.calcCol(index, row+1)
+            board[row][col] = isMaximizing ? botMark : humanMark
+            move.value = minimax(board, depth+1, !isMaximizing)
+            move.index = index
+            board[row][col] = ''
+            moves.push(move)
+        })
+
+        var bestMove
+        if (isMaximizing) {
+            var bestValue = -Infinity
+            moves.forEach(move => {
+                if (move.value > bestValue) {
+                    bestValue = move.value
+                    bestMove = move.index
+                }
+            })
+            if (depth !== 0) return bestValue
+        }
+        else {
+            var bestValue = Infinity
+            moves.forEach(move => {
+                if (move.value < bestValue) {
+                    bestValue = move.value
+                    bestMove = move.index
+                }
+            })
+            if (depth !== 0) return bestValue
+        }
+        return bestMove
     }
     const getEmptyIndexes = (board) => {
         const emptyIndexes = []
@@ -319,150 +320,59 @@ const GameManager = (() => {
         }
         return emptyIndexes
     }
-    const checkWinningRow = (index, mark, size) => {
-        const row = GameBoard.calcRow(index)
-        const col = GameBoard.calcCol(index, row+1)
-        const board = GameBoard.gameBoard
-        if (size === 3) {
-            if (row-1 >= 0 & row+1 < size) {
-                if (board[row-1][col] === mark & board[row+1][col] === mark) {
-                    return true
-                }
+    const checkWinningRow = (board, mark, size) => {
+        var rowStr = ''
+        var colStr = ''
+        var diaStr = ''
+        var winStr = size === 3 ? mark.repeat(3) : mark.repeat(4)
+        for(i=0; i<size; i++) {
+            for(j=0; j<size; j++) {
+                rowStr+=board[i][j]
             }
-            if (row-1 >= 0 & row+1 < size & col-1 >= 0 & col+1 < size) {
-                if (board[row-1][col+1] === mark & board[row+1][col-1] === mark) {
-                    return true
-                }
-                if (board[row+1][col+1] === mark & board[row-1][col-1] === mark) {
-                    return true
-                }
+            if (rowStr.search(winStr) !== -1) return true
+            rowStr = ''
+        }
+        for(i=0; i<size; i++) {
+            for(j=0; j<size; j++) {
+                colStr+=board[j][i]
             }
-            if (col-1 >= 0 & col+1 < size) {
-                if (board[row][col+1] === mark & board[row][col-1] === mark) {
-                    return true
+            if (colStr.search(winStr) !== -1) return true
+            colStr = ''
+        }
+        for(a=0; a<size; a++) {
+            for(i=0; i<size; i++) {
+                for(j=0; j<size; j++) {
+                    if (i===j-a) diaStr+=board[i][j] ? board[i][j] : '-'
                 }
-            }
-            if (row-2 >= 0) {
-                if (board[row-1][col] === mark & board[row-2][col] === mark) {
-                    return true
-                }
-            }
-            if (col-2 >= 0) {
-                if (board[row][col-1] === mark & board[row][col-2] === mark) {
-                    return true
-                }
-            }
-            if (row+2 < size) {
-                if (board[row+1][col] === mark & board[row+2][col] === mark) {
-                    return true
-                }
-            }
-            if (col+2 < size) {
-                if (board[row][col+1] === mark & board[row][col+2] === mark) {
-                    return true
-                }
-            }
-            if (row-2 >= 0 & col+2 < size) {
-                if (board[row-1][col+1] === mark & board[row-2][col+2] === mark) {
-                    return true
-                }
-            }
-            if (row-2 >= 0 & col-2 >= 0) {
-                if (board[row-1][col-1] === mark & board[row-2][col-2] === mark) {
-                    return true
-                }
-            }
-            if (row+2 < size & col+2 < size) {
-                if (board[row+1][col+1] === mark & board[row+2][col+2] === mark) {
-                    return true
-                }
-            }
-            if (row+2 < size & col-2 < size) {
-                if (board[row+1][col-1] === mark & board[row+2][col-2] === mark) {
-                    return true
-                }
+                if (diaStr.search(winStr) !== -1) return true
+                if (i === size-1) diaStr = ''
             }
         }
-        else {
-            if (row-2 >= 0 & row+1 < size) {
-                if (board[row-2][col] === mark & board[row-1][col] === mark & board[row+1][col] === mark) {
-                    return true
+        for(a=0; a<size; a++) {
+            for(i=0; i<size; i++) {
+                for(j=0; j<size; j++) {
+                    if (i-a===j) diaStr+=board[i][j] ? board[i][j] : '-'
                 }
+                if (diaStr.search(winStr) !== -1) return true
+                if (i === size-1) diaStr = ''
             }
-            if (row-1 >= 0 & row+2 < size) {
-                if (board[row-1][col] === mark & board[row+1][col] === mark & board[row+2][col] === mark) {
-                    return true
+        }
+        for(a=0; a<size; a++) {
+            for(i=0; i<size; i++) {
+                for(j=size-1; j>-1; j--) {
+                    if (i === size-1-j-a) diaStr+=board[i][j] ? board[i][j] : '-'
                 }
+                if (diaStr.search(winStr) !== -1) return true
+                if (i === size-1) diaStr = ''
             }
-            if (row-2 >= 0 & row+1 < size & col-2 >= 0 & col+1 < size) {
-                if (board[row-2][col-2] === mark & board[row-1][col-1] === mark & board[row+1][col+1] === mark) {
-                    return true
+        }
+        for(a=0; a<size; a++) {
+            for(i=0; i<size; i++) {
+                for(j=size-1; j>-1; j--) {
+                    if (i-a === size-1-j) diaStr+=board[i][j] ? board[i][j] : '-'
                 }
-            }
-            if (row-1 >= 0 & row+2 < size & col-1 >= 0 & col+2 < size) {
-                if (board[row-1][col-1] === mark & board[row+2][col+2] === mark & board[row+1][col+1] === mark) {
-                    return true
-                }
-            }
-            if (row-2 >= 0 & row+1 < size & col-1 >= 0 & col+2 < size) {
-                if (board[row-2][col+2] === mark & board[row-1][col+1] === mark & board[row+1][col-1] === mark) {
-                    return true
-                }
-            }
-            if (row-1 >= 0 & row+2 < size & col-2 >= 0 & col+1 < size) {
-                if (board[row-1][col+1] === mark & board[row+2][col-2] === mark & board[row+1][col-1] === mark) {
-                    return true
-                }
-            }
-            if (col-2 >= 0 & col+1 < size) {
-                if (board[row][col+1] === mark & board[row][col-1] === mark & board[row][col-2] === mark) {
-                    return true
-                }
-            }
-            if (col-1 >= 0 & col+2 < size) {
-                if (board[row][col-1] === mark & board[row][col+1] === mark & board[row][col+2] === mark) {
-                    return true
-                }
-            }
-            if (row-3 >= 0) {
-                if (board[row-1][col] === mark & board[row-2][col] === mark & board[row-3][col] === mark) {
-                    return true
-                }
-            }
-            if (col-3 >= 0) {
-                if (board[row][col-1] === mark & board[row][col-2] === mark & board[row][col-3] === mark) {
-                    return true
-                }
-            }
-            if (row+3 < size) {
-                if (board[row+1][col] === mark & board[row+2][col] === mark & board[row+3][col] === mark) {
-                    return true
-                }
-            }
-            if (col+3 < size) {
-                if (board[row][col+1] === mark & board[row][col+2] === mark & board[row][col+3] === mark) {
-                    return true
-                }
-            }
-            if (row-3 >= 0 & col+3 < size) {
-                if (board[row-1][col+1] === mark & board[row-2][col+2] === mark & board[row-3][col+3] === mark) {
-                    return true
-                }
-            }
-            if (row-3 >= 0 & col-3 >= 0) {
-                if (board[row-1][col-1] === mark & board[row-2][col-2] === mark & board[row-3][col-3] === mark) {
-                    return true
-                }
-            }
-            if (row+3 < size & col+3 < size) {
-                if (board[row+1][col+1] === mark & board[row+2][col+2] === mark & board[row+3][col+3] === mark) {
-                    return true
-                }
-            }
-            if (row+3 < size & col-3 < size) {
-                if (board[row+1][col-1] === mark & board[row+2][col-2] === mark & board[row+3][col-3] === mark) {
-                    return true
-                }
+                if (diaStr.search(winStr) !== -1) return true
+                if (i === size-1) diaStr = ''
             }
         }
         return false
@@ -494,8 +404,8 @@ const GameManager = (() => {
         gameParameters.player1.mark = mark2
         gameParameters.player2.mark = mark1
     }
-    const checkResult = (index, mark, size) => {
-        if(checkWinningRow(index, mark, size)) {
+    const checkResult = (board, mark, size) => {
+        if(checkWinningRow(board, mark, size)) {
             if(mark === gameParameters.player1.mark) {
                 drawModal(gameParameters.player1, 'win')
                 gameParameters.player1.score += 1
@@ -525,17 +435,27 @@ const GameManager = (() => {
     const placeMark = (e) => {
         const element = e.target
         const index = Number(e.target.id)
-        if(element.innerHTML==='') {
-            GameBoard.updateBoard(element, index, gameParameters.turn)
-        }
-        if(!checkResult(index, gameParameters.turn, gameParameters.gameBoardSize)) {
-            controlGamePlay(gameParameters.gameType)
-        }
-        else {
-            switchMarks()
-            gameParameters.turn = 'x'
-            setTimeout(f => newGame(), 1000)
-        }
+        const board = GameBoard.gameBoard
+        const turn = gameParameters.turn
+        const size = gameParameters.gameBoardSize
+        const type = gameParameters.gameType
+        if (!gameParameters.botMakingMove) {
+            if(element.innerHTML==='') {
+                GameBoard.updateBoard(element, index, turn)
+                if (type === 1) {
+                    gameParameters.botMakingMove = true
+                }
+                if(!checkResult(board, turn, size)) {
+                    controlGamePlay(type)
+                }
+                else {
+                    switchMarks()
+                    gameParameters.botMakingMove = false
+                    gameParameters.turn = 'x'
+                    setTimeout(f => newGame(), 1000)
+                }
+            }  
+        } 
         e.preventDefault()
     }
     return { newGame, placeMark }
