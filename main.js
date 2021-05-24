@@ -229,6 +229,7 @@ const GameManager = (() => {
         gameParameters.turn = 'x'
         gameParameters.botMakingMove = false
         gameParameters.gameBoardSize = 5
+        gameParameters.difficulty = 'easy'
         newGame()
     }
     const initEasyGame = () => {
@@ -250,12 +251,12 @@ const GameManager = (() => {
             index = minimax(board, 0, true)
         }
         const element = document.getElementById(`${index}`)
-        GameBoard.updateBoard(element, index, botMark)
+        setTimeout(f => GameBoard.updateBoard(element, index, botMark), 500)
         gameParameters.botMakingMove = false
         if(checkResult(board, botMark, size)) {
             switchMarks()
             gameParameters.turn = 'x'
-            setTimeout(f => newGame(), 1000)
+            setTimeout(f => newGame(), 500)
         }
     }
     const minimax = (board, depth, isMaximizing) => {
